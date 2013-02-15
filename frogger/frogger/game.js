@@ -3,8 +3,7 @@ var frog_x; var frog_y;
 var lives; var level; var score;
 highscore = 0; //will have to account for this
 
-/////
-//SPRITES
+/////SPRITES/////
 roadside = new Image(); roadside.src = 'assets/frogger_sprites.png';
 header = new Image(); header.src = 'assets/frogger_sprites.png';
 lifesprite = new Image(); lifesprite.src = 'assets/frogger_sprites.png';
@@ -14,7 +13,8 @@ vehicle2 = new Image(); vehicle2.src = 'assets/frogger_sprites.png';
     //frog
 frogU = new Image(); frogU.src = 'assets/frogger_sprites.png'; //up
 
-///////////////EVENTUALLY WILL PUT THE ABOVE INTO AN IMAGE LOADER FUNCTION.....
+//**NOTE: EVENTUALLY WILL PUT THE ABOVE INTO AN IMAGE LOADER FUNCTION **//
+//**AND CREATE ARRAYS FOR CERTAIN IMAGE ELEMENTS **//
 
 
 //function for drawing roadsides
@@ -42,11 +42,12 @@ function store_image_data(){};
 function initial_image_data(){
 	frog_x = 200; frog_y = 480; //frog_y is based on location & width of lower roadside
 
-	//DRAW STUFF (MOVE TIS LATER)
+	//DRAW EXTRA STUFF FOR A2
+	//later I will put things like vehicles and logs into arrays that I will animate
 	ctx.drawImage(frogU,12,360,30,30,frog_x,frog_y,35,35);
+	ctx.drawImage(bigLog,5,165,180,30,160,140,180,30);
 	ctx.drawImage(vehicle1,45,265,30,35,30,320,30,30);
 	ctx.drawImage(vehicle2,77,265,30,35,80,360,30,30);
-
 };
 
 function level_update(newLevel){
@@ -82,7 +83,7 @@ function level_update(newLevel){
 		level += 1;
 		initial_image_data();
 	} //else {
-		//STORE ALL VARIABLE IMAGE DATA like positions of cars and logs etc
+		//RESTORE ALL VARIABLE IMAGE DATA like positions of cars and logs etc
 	//}
 	
 	//FOOTER
@@ -110,8 +111,9 @@ function start_game(){
 		//INITIALIZE
 		ctx = canvas.getContext('2d');
 		lives = 3; score = 0; level = 0;
+		//begin game
 		level_update(1);
-]	  }
+	  }
 	  else {
 	    alert('Sorry, canvas is not supported on your browser!');
 	  }
