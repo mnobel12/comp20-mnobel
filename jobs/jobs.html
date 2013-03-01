@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<link rel="stylesheet" type="text/css" href="jobs.css">
+<title>Friends of Ming Chow Jobs Listing</title>
+<script>
+function request(){
+	var str;
+
+	try {
+		str = new XMLHttpRequest(); //chrome, firefox, etc
+	}
+	catch (ms1) {
+		try {
+			str = new ActiveXObject("Msxml2.XMLHTTP"); //IE7 +
+		}
+		catch (ms2) {
+			try {
+				str = new ActiveXObject("Microsoft.XMLHTTP"); //IE5
+			}
+			catch (ex) {
+				str = null;
+			}
+		}
+	}
+	if (str == null) {
+	  alert("Error creating request object --Ajax not supported?");
+	}
+	else {
+		str.onreadystatechange = function parse() {
+
+			//get json string from website
+			if((str.readyState == 4) && (str.status == 200)){
+
+				//=========ORIGINAL LAB 7 CODE=========//
+				//RENDER ALL JOBS ON THE PAGE
+				//IN THE <DIV ID="list"> SECTION
+
+				joblist = document.getElementById("list");
+				joblist_str = JSON.parse(str.responseText);
+				for(i=0; i<joblist_str.length; i++){
+					//create a new table element
+					tableNode = document.createElement('table');
+					h = tableNode.createTHead();
+					h.innerHTML = joblist_str[i]['position'];
+					r = tableNode.insertRow(0);
+					c = r.insertCell(0);
+					c.innerHTML = joblist_str[i]['company'];
+					r = tableNode.insertRow(1);
+					c = r.insertCell(0);
+					c.innerHTML = joblist_str[i]['location'];
+
+					joblist.appendChild(tableNode);
+				}
+				//=========END OF ORIGINAL LAB 7 CODE=========//
+			}
+		};
+		str.open("GET", "http://messagehub.herokuapp.com/lab8.json",true);
+		str.send('');
+	}
+}
+</script>
+</head>
+
+<body onload=request()>
+<div id="list"></div>
+</body>
+
+</html>
+
