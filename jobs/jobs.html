@@ -40,6 +40,7 @@ function request(){
 
 				joblist = document.getElementById("list");
 				joblist_str = JSON.parse(str.responseText);
+				console.log(joblist_str);
 				for(i=0; i<joblist_str.length; i++){
 					//create a new table element
 					tableNode = document.createElement('table');

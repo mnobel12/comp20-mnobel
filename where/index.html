@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title>Mapping the Red Line</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+		<link rel="stylesheet" href="geolocation_map_style.css" />
+		
+		<script>
+			
+			var myLat = 0;
+			var myLng = 0;
+			var request = new XMLHttpRequest();
+			var me = new google.maps.LatLng(myLat, myLng);
+			var myOptions = {
+						zoom: 13, // The larger the zoom number, the bigger the zoom
+						center: me,
+						mapTypeId: google.maps.MapTypeId.ROADMAP
+					};
+			var map;
+			var marker;
+			var infowindow = new google.maps.InfoWindow();
+			var poly;
+			var arrival_times; 
+
+			
+			function init()
+			{
+				map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+				getMyLocation();
+			}
+			
+			function getMyLocation()
+			{
+				if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
+					navigator.geolocation.getCurrentPosition(function(position) {
+						myLat = position.coords.latitude;
+						myLng = position.coords.longitude;
+						arrival_times = schedule();
+						renderMap();
+					});
+				}
+				else {
+					alert("Geolocation is not supported by your web browser.  What a shame!");
+				}
+			}
+
+			function renderMap()
+			{
+				me = new google.maps.LatLng(myLat, myLng);
+				
+				// Update map and go there...
+				map.panTo(me);
+	
+				// Create a marker
+				marker = new google.maps.Marker({
+					position: me,
+					title: "I am here at... ("+myLat+", "+myLng+")"
+				});
+				marker.setMap(map);
+				infowindow.setContent(marker.title);
+				infowindow.open(map, marker);
+				
+				//plot red line data
+				redLine = schedule(); redLinePath = []; min_distance = [-1,100000];
+				for (i = 0; i < redLine.length; i++) {
+					redLinePath[i] = createMarker(redLine[i],'',redLine[i][2]);
+					console.log(redLine[i]);
+					dist = findDistance(myLat,myLng,redLine[i][1][0],redLine[i][1][1]);
+					if(dist < min_distance[1]){ 
+						min_distance[0] = i;
+						min_distance[1] = dist; 
+					}
+				}
+				min_loc = min_distance[0];
+				createMarker(redLine[min_loc],min_distance[1],
+							 arrival_times[redLine[min_loc]['PlatformKey']]);
+				
+				polyPath = new google.maps.Polyline({
+					path: redLinePath,
+					strokeColor: "#FF0000",
+					strokeOpacity: 1.0,
+					strokeWeight: 4
+				});
+				polyPath.setMap(map);
+			}
+				
+			function parseCSV(s) {
+				var arr = '[', fields = [];
+				var c = col = 0;
+				for (c; c < s.length; c++) {
+					var cc = s[c], nc = s[c+1];
+					fields[col] = fields[col] || '';
+					if (cc == ',') { ++col; continue; }
+					if (cc == '\n') { break; }
+					if (cc != '\r') { fields[col] += cc; }
+				}	
+				var rail_line = ''; col = 0; c = c-1;
+				for (c; c < s.length; c++) {
+					var cc = s[c], nc = s[c+1];
+					rail_line = rail_line || ('{"'+fields[col]+'":"');			
+					if (cc == ',') {
+						col++;
+						rail_line += '","'+fields[col]+'":"'; //add new dictionary entry
+						continue; 
+					}
+					if (cc == '\n') {
+						if(col > 0){
+							arr += rail_line + '"}';
+							if(c < s.length-2){ arr += ','; }
+						}
+						rail_line = ''; col = 0;
+						continue;
+					}
+					if (cc != '\r') { 
+						rail_line	+= cc; 
+					}
+				}
+				arr += ']';
+				return arr;
+			}
+			
+			function schedule(){
+				var str;
+				try { str = new XMLHttpRequest(); //chrome, firefox, etc
+				} catch (ms1) {
+					try {
+						str = new ActiveXObject("Msxml2.XMLHTTP"); //IE7 +
+					} catch (ms2) {
+						try {
+							str = new ActiveXObject("Microsoft.XMLHTTP"); //IE5
+						} catch (ex) {
+							str = null;
+						}
+					}
+				}
+				if (str == null) {
+				  alert("Error creating request object --Ajax not supported?");
+				}
+				else {
+					arrivals = {}; var plotterData;
+					str.onreadystatechange = function parse() {
+						//get json string from website, get relevant data, group by station, and return
+						if((str.readyState == 4) && (str.status == 200)){
+							mapper_str = JSON.parse(str.responseText);
+							for(i=0; i < mapper_str.length; i++){
+								key = mapper_str[i]['PlatformKey'];
+								if(arrivals[key] == undefined){
+									arrivals[key] = '<br>'+mapper_str[i]['Time'];
+									console.log(arrivals[key]);
+								} else {
+									arrivals[key] += '<br>'+mapper_str[i]['Time'];
+								}
+							}
+							plotterData = redLineData(arrivals);
+						}
+					};
+					str.open("GET", "http://mbtamap-cedar.herokuapp.com/mapper/redline.json",false);
+					str.send('');
+					return plotterData;
+				}
+			}
+			
+			function redLineData(arrivals)
+			{
+				
+				var str; var redLine = [];
+				try { str = new XMLHttpRequest(); //chrome, firefox, etc
+				} catch (ms1) {
+					try {
+						str = new ActiveXObject("Msxml2.XMLHTTP"); //IE7 +
+					} catch (ms2) {
+						try {
+							str = new ActiveXObject("Microsoft.XMLHTTP"); //IE5
+						} catch (ex) {
+							str = null;
+						}
+					}
+				}
+				if (str == null) {
+				  alert("Error creating request object --Ajax not supported?");
+				}
+				else {
+					str.onreadystatechange = function(){
+						if((str.readyState == 4)){ 
+							//parse CSV
+							var raildata = JSON.parse(parseCSV(str.responseText));
+							for(i = 0; i < raildata.length; i++){
+								if (raildata[i]['Line'] != "Red"){ break; }
+								console.log(arrivals[raildata[i]['PlatformKey']]);
+								redLine[i] = [raildata[i]['StationName'], 
+											  [parseFloat(raildata[i]['stop_lat']),parseFloat(raildata[i]['stop_lon'])], arrivals[raildata[i]['PlatformKey']]];
+							}
+						}
+					}
+					str.open("GET", "./RealTimeHeavyRailKeys.csv",false);
+					str.send('');
+				}
+				return redLine;
+			}
+						
+			function createMarker(place,min,myarrivals)
+			{
+				place_loc = new google.maps.LatLng(place[1][0],place[1][1]);
+				place_desc= place[0]+" T station"
+				if( min != ''){
+					place_desc = "*closest station to current location*<br>"+place_desc+"<br>distance = "+min+" miles"
+				}
+				if(myarrivals != undefined){
+					for(at = 0; at < myarrivals.length; at++){
+						place_desc += myarrivals[at];
+					}
+				}
+				var marker = new google.maps.Marker({
+					position: place_loc,
+					title: place_desc,
+					icon: 'red_line_sym.png'
+				});
+				marker.setMap(map);
+				google.maps.event.addListener(marker, 'click', function() {
+					infowindow.close();
+					infowindow.setContent(marker.title);
+					infowindow.open(map, marker);
+				});
+				return place_loc;
+			}
+			
+			function toRad(number){
+				return number*Math.PI/180;
+			}
+			
+			function findDistance(lat1,lon1,lat2,lon2){
+				R = 6371; // km 
+				dLat = toRad((lat2-lat1));
+				dLon = toRad((lon2-lon1));
+				a = Math.sin(dLat/2)*Math.sin(dLat/2) + 
+					Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*
+					Math.sin(dLon/2)*Math.sin(dLon/2);
+				c = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+				d = R*c*0.621371; //convert to miles
+				return d;
+			}
+
+
+		</script>
+	</head>
+	
+	<body onload="init()">
+		<div id="map_canvas"></div>
+	</body>
+</html>
