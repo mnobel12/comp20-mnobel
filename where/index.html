@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+OB<!DOCTYPE html>
 
 <html>
 	<head>
@@ -244,11 +244,77 @@
 				return d;
 			}
 
+			function findFriends(myLat, myLon){
+				var request;
 
+				try {
+				  request = new XMLHttpRequest();
+				}
+				catch (ms1) { // yes, exception handling is supported in JavaScript
+				  try {
+			            request = new ActiveXObject("Msxml2.XMLHTTP");
+				  }
+				  catch (ms2) {
+				    try {
+				      request = new ActiveXObject("Microsoft.XMLHTTP");
+				    }
+				    catch (ex) { request = null; }
+				  }
+				}
+				if (request == null) {
+				  alert("Error creating request object --Ajax not supported?");
+				}
+				else {
+				  //get carmen and waldo info and display them
+				  carmen = []; waldo = [];
+				  request.onreadystatechange = function friendMapper(){
+				    if((request.readyState == 4) && (request.status == 200)){
+				      friend_str = JSON.parse(request.responseText);
+				      for(i=0; i < friend_str.length; i++){
+				        //get the name
+					name = friend_str[i]['name'].split();
+					console.log(name);
+					//get the latitude and longitude
+					friendLoc = friend_str[i]['loc']; friendLat = parseFloat(friendLoc['latitude']); friendLon = parseFloat(friendLoc['longitude']);  
+					markerLoc = new google.maps.LatLng(friendLat, friendLon);
+					//create content
+					markerDesc = name;
+					if(friend_str[i]['note'] != undefined){
+					  markerDesc = note;
+					}
+					//get icon
+					markerIcon = name+'.png';
+					
+					marker = new google.maps.Marker({
+					  position: markerLoc,
+					  title: markerDesc,
+					  icon: markerIcon
+					});
+					marker.setMap(map);
+					google.maps.event.addListener(marker, 'click', function() {
+					  infowindow.close();
+					  infowindow.setContent(marker.title);
+					  infowindow.open(map, marker);
+					});
+					
+					//calculate and display distance
+					d = findDistance(myLat, myLon, friendLat, friendLon);
+					myTextDiv = document.getElementbyID('friend_distances');
+					myLabel = document.createElement('h1');
+					myLabel.innerHTML = 'The distance to '+name+' is '+d+' miles';
+					myTextDiv.appendChild(myLabel);
+					map.controls[google.maps.ControlPosition.TOP_CENTER].push(myTextDiv); 
+				      }
+				    }
+				  };  
+				  request.open("GET", "http://messagehub.herokuapp.com/a3.json", true);
+				  request.send('');
+			}
 		</script>
 	</head>
 	
 	<body onload="init()">
 		<div id="map_canvas"></div>
+		<div id="friend_distances" style="color: white; position: absolute;"></div>
 	</body>
 </html>
