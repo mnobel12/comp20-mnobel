@@ -1,5 +1,4 @@
 html {
-	background-image:url('loading.gif');
 	height: 100%;
 	font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
 }

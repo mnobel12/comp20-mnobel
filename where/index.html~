@@ -7,6 +7,11 @@
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
 		<script type="text/javascript" src="where_in_the_world.js"></script>
 		<link rel="stylesheet" href="redLine_map_style.css" />
+		
+		<script>
+			
+
+		</script>
 	</head>
 	
 	<body onload="init()">

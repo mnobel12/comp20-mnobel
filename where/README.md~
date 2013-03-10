@@ -1,0 +1,25 @@
+README.MD
+
+Mical Nobel
+A3
+
+tested in firefox.
+
+things I did correctly
+- Map all the stations on the Red Line using Google Maps API version 3
+- Use a distinct icon marker for all the stations
+- Implement a red polyline connecting all the stations
+- Upon clicking a station, an info window is displayed with the name of the station and the arrival schedule (including directions)
+- Detects and maps your current location via navigator.geolocation with an info window marking the location
+- Display the closest red line station with approximate distance away in miles* 	(*I included this information in the info window because I wasn't totally sure how I was supposed to display it, and it was simple!)
+- retrieve and display the locations of carmen sandiego and waldo (the "note" and location is in the marker title, if you hover over the icons)
+- display the distance between you and carmen and you and waldo as an overlay
+- used 1 css file
+
+
+things I did not do correctly
+- I'm not sure if this is incorrect, but I handled a couple of the xmlhttp requests in a synchronous way by setting the 'async' field in open(method,url,async) to true. it does delay the map appearing on the screen but it made it easier... also i added the loading gif
+
+
+
+I worked alone on this project. It took me ~7 hours.
