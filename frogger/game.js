@@ -249,7 +249,6 @@ function move(evt){
 	}
 }
 
-
 function start_game(){
       canvas = document.getElementById('game');
 	  //check if canvas is supported on browser

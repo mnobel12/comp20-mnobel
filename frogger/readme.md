@@ -28,7 +28,7 @@ What I did correctly:
 	- **curently no scoring	**
 - (3) Additional Implementations
 	- frogger is animated to dead_frog.png if he gets killed!
-	-  putting in sound asap
+	-  sound added
 	- functionality for different levels pretty much ready!! 
 	but bc there is no winning, i have it set up to change 
 	whenever you LOSE
