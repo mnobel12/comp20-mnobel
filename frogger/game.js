@@ -174,10 +174,10 @@ function level_init(){
 	image_tracker[0]  = {'image': medlog, 'x': [-medlog.swidth, -((-5*medlog.swidth+W)/4), -((3*W - medlog.swidth)/4)], 'y': 120, 'speed': 2};
 	image_tracker[1]  = {'image': pinkcar, 'x': [W+pinkcar.swidth, W+5*pinkcar.swidth, W+8*pinkcar.swidth, W+12*pinkcar.swidth], 'y': 150, 'speed': -2};
 	image_tracker[2]  = {'image': biglog, 'x': [-biglog.swidth-30, -(2*biglog.swidth+10+2*W/3-2*medlog.swidth), -(3*biglog.swidth+W-3*medlog.swidth)], 'y': 180, 'speed': 3};
-	image_tracker[3]  = {'image': shortlog, 'x':  [-W, -W/2+(shortlog.swidth - medlog.swidth), 2*shortlog.swidth-medlog.swidth], 'y': 240, 'speed': 1};
+	image_tracker[3]  = {'image': shortlog, 'x':  [-W, -W/2+(shortlog.swidth - medlog.swidth), -W + 2*shortlog.swidth+medlog.swidth], 'y': 240, 'speed': 1};
 	image_tracker[4]  = {'image': pinkcar, 'x': [W+pinkcar.swidth, W+5*pinkcar.swidth, W+8*pinkcar.swidth, W+12*pinkcar.swidth], 'y': 210, 'speed': -2};
 	image_tracker[5]  = {'image': truck, 'x': [W+truck.swidth, W+5*truck.swidth/2], 'y': 330, 'speed': -1};
-	image_tracker[6]  = {'image': racer, 'x': [-racer.swidth-30, -(10+2*W/3), -(3*racer.swidth+30+3*racer_sp)], 'y': 360, 'speed': 3};
+	image_tracker[6]  = {'image': racer, 'x': [-racer.swidth-30, -(10+2*W/3), -(2*W/3+10+racer.swidth*2)], 'y': 360, 'speed': 3};
 	image_tracker[7]  = {'image': pinkcar, 'x': [W+pinkcar.swidth, W+5*pinkcar.swidth, W+8*pinkcar.swidth], 'y': 390, 'speed': -2};
 	image_tracker[8]  = {'image': tractor, 'x': [-tractor.swidth, -(5*tractor.swidth), -(9*tractor.swidth)], 'y': 420, 'speed': 1};		
 	image_tracker[9]  = {'image': yellowcar, 'x': [W+2*yellowcar.swidth, W+5*pinkcar.swidth, W+8*pinkcar.swidth], 'y': 450, 'speed': -2};
@@ -199,7 +199,8 @@ function level_init(){
 	else if(level == 4){
 		image_tracker[3].speed = 0.75*image_tracker[0].speed;
 		image_tracker[4]['x'].splice(6-level,6-level);
-
+		image_tracker[5].speed -= 1;
+		
 	}
 }
 
