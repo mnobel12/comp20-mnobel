@@ -126,7 +126,7 @@ function schedule(){
 				mapper_str = JSON.parse(str.responseText);
 			}
 		};
-		str.open("GET", "http://mbtamap-cedar.herokuapp.com/mapper/redline.json",false);
+		str.open("GET", "http://mbtamap.herokuapp.com/mapper/redline.json",false);
 		str.send('');
 		if(mapper_str != ''){
 			for(i=0; i < mapper_str.length; i++){
