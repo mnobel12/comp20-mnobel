@@ -41,8 +41,10 @@ inputStream = ''
 iptr= 0                     #maintains the position in the input string
 RAW_Q = []                  #raw data 
 PLOT_ARRAY = []
+back_color = "#002244"; text_color = "#FFFFFF"
+graph_bg = "#000000"; graph_ax = "#FFFF00"; graph_gr = 'gray'
 exit_flag = False #testing... trying to figure out exit issue
-
+restart     = False
 
 #======== DATA RETRIEVAL ========#
 def PortStream():
@@ -73,7 +75,7 @@ def readPort():
                 converted_val = (5*float(datum))/1024
                 RAW_Q.append(converted_val)   #convert to voltage reading
                 sampleEval(converted_val)
-        timer = threading.Timer(read_int, readPort).start()
+        #timer = threading.Timer(read_int, readPort).start()
         
 def sampleEval(datum):
     if(len(RAW_Q)%frequency == 0):
@@ -85,13 +87,12 @@ def sampleEval(datum):
 
 #========= GRAPHING APP =========#
 def f(element):
-    element.SetForegroundColour("white")
-    element.SetFont(wx.Font(18, wx.ROMAN, wx.NORMAL, wx.NORMAL))
-    element.SetBackgroundColour("#002244")
-
+    element.SetForegroundColour(text_color)
+    element.SetFont(wx.Font(14, wx.ROMAN, wx.NORMAL, wx.NORMAL))
+    element.SetBackgroundColour(back_color)
 
 def colorBackground(element):
-    element.SetBackgroundColour("#002244")
+    element.SetBackgroundColour(back_color)
     
     
 class BoundControlBox(wx.Panel):
@@ -104,9 +105,7 @@ class BoundControlBox(wx.Panel):
         
         self.value = initval
 
-        box = wx.StaticBox(self, -1, label,style=wx.TE_RICH)
-        box.SetForegroundColour("white")
- #       f(box)
+        box = wx.StaticBox(self, -1, label, style=wx.TE_RICH2); f(box); 
         sizer = wx.StaticBoxSizer(box, wx.VERTICAL)
         
         self.radio_auto = wx.RadioButton(self, -1, 
@@ -161,19 +160,18 @@ class GraphFrame(wx.Frame):
         and start the timer."""
         wx.Frame.__init__(self, None, -1, self.title)
 
-
-        readPort()
         self.data = []       
+        self.running= True
         self.paused = False
-        self.running= False
         
         self.create_menu()
         self.create_status_bar()
         self.create_main_panel()
-        
+
+        if self.running: readPort()
         self.redraw_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_redraw_timer, self.redraw_timer)        
-        self.redraw_timer.Start(100)
+        self.redraw_timer.Start(read_int)
 
     def create_menu(self):
         """Create save/exit/etc menu."""
@@ -191,87 +189,66 @@ class GraphFrame(wx.Frame):
 
     def create_main_panel(self):
         self.panel = wx.Panel(self)
-        colorBackground(self)
+        f(self)
 
         self.init_plot()
         self.canvas = FigCanvas(self.panel, -1, self.fig)
 
         #===create upper panel===#
         self.upper_panel    = wx.BoxSizer(wx.HORIZONTAL) 
+        box_font =  wx.Font(18, wx.ROMAN, wx.ITALIC, wx.NORMAL)
 
-        patient_info_box = wx.StaticBox(self.panel, -1, 'Patient Information')
+        patient_info_box = wx.StaticBox(self.panel, -1, 'Patient Information'); f(patient_info_box)
+        patient_info_box.SetFont(box_font)
         patient_info = wx.StaticBoxSizer(patient_info_box, wx.VERTICAL)       
         self.patient_data       = wx.BoxSizer(wx.VERTICAL)
         self.create_data_textbox(self.patient_data,'Patient Name')
         self.create_data_textbox(self.patient_data,'Patient DOB')
         patient_info.Add(self.patient_data)
-        #f(patient_info)
+        
 
-        eye_info_box = wx.StaticBox(self.panel, -1, 'Eye Information')
+        eye_info_box = wx.StaticBox(self.panel, -1, 'Eye Information'); f(eye_info_box)
+        eye_info_box.SetFont(box_font)
         eye_info = wx.StaticBoxSizer(eye_info_box, wx.VERTICAL)       
         self.eye_data       = wx.BoxSizer(wx.VERTICAL)
         self.create_data_textbox(self.eye_data,'IOP')
         self.create_data_textbox(self.eye_data,'AO')
         eye_info.Add(self.eye_data)
+        
 
         self.upper_panel.Add(patient_info, border=5, flag=wx.ALL)
         self.upper_panel.AddSpacer(75)
         self.upper_panel.Add(eye_info,     border=5, flag=wx.ALL)
 
         #===create bottom panel===#
-        self.xmin_control = BoundControlBox(self.panel, -1, "X min", 0)
-        self.xmax_control = BoundControlBox(self.panel, -1, "X max", 120)
-        self.ymin_control = BoundControlBox(self.panel, -1, "Y min", 0)
-        self.ymax_control = BoundControlBox(self.panel, -1, "Y max", 5)
-
         self.start_button   = wx.Button(self.panel, self.ID_START, "Start")
-        self.Bind(wx.EVT_BUTTON, self.on_start_button, self.start_button)
-        self.Bind(wx.EVT_UPDATE_UI, self.on_update_start_button, self.start_button)
+##        self.Bind(wx.EVT_BUTTON, self.on_start_button, self.start_button)
+##        self.Bind(wx.EVT_UPDATE_UI, self.on_update_start_button, self.start_button)
 
         self.pause_button = wx.Button(self.panel, -1, "Pause")
         self.Bind(wx.EVT_BUTTON, self.on_pause_button, self.pause_button)
         self.Bind(wx.EVT_UPDATE_UI, self.on_update_pause_button, self.pause_button)
         
-        self.cb_grid = wx.CheckBox(self.panel, -1, 
-            "Show Grid",
-            style=wx.ALIGN_RIGHT)
-        self.Bind(wx.EVT_CHECKBOX, self.on_cb_grid, self.cb_grid)
-        self.cb_grid.SetValue(True)
-        
-        self.cb_xlab = wx.CheckBox(self.panel, -1, 
-            "Show X labels",
-            style=wx.ALIGN_RIGHT)
-        self.Bind(wx.EVT_CHECKBOX, self.on_cb_xlab, self.cb_xlab)        
-        self.cb_xlab.SetValue(True)
-
         self.hbox1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.hbox1.Add(self.pause_button, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
-        self.hbox1.AddSpacer(20)
-        self.hbox1.Add(self.cb_grid, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+        self.hbox1.Add(self.start_button, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
         self.hbox1.AddSpacer(10)
-        self.hbox1.Add(self.cb_xlab, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
-        
-        self.hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        self.hbox2.Add(self.xmin_control, border=5, flag=wx.ALL)
-        self.hbox2.Add(self.xmax_control, border=5, flag=wx.ALL)
-        self.hbox2.AddSpacer(24)
-        self.hbox2.Add(self.ymin_control, border=5, flag=wx.ALL)
-        self.hbox2.Add(self.ymax_control, border=5, flag=wx.ALL)
+        self.hbox1.Add(self.pause_button, border=5, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+        self.hbox1.AddSpacer(10)
+
 
         #===layout main frame===#
         self.vbox = wx.BoxSizer(wx.VERTICAL)
         self.vbox.Add(self.upper_panel, 0, flag=wx.ALIGN_LEFT | wx.ALIGN_TOP)
         self.vbox.Add(self.canvas, 1, flag=wx.LEFT | wx.TOP | wx.GROW)
         self.vbox.Add(self.hbox1, 0, flag=wx.ALIGN_LEFT | wx.ALIGN_TOP)
-        self.vbox.Add(self.hbox2, 0, flag=wx.ALIGN_LEFT | wx.ALIGN_TOP)
-        
+       
         self.panel.SetSizer(self.vbox)
         self.vbox.Fit(self)
                                     
     def create_data_textbox(self, pnl, title, val=''):
         self.pbox = wx.BoxSizer(wx.HORIZONTAL)
-        self.plab = wx.StaticText(self.panel, -1, title, size=(50+len(title),-1)); f(self.plab)
-        self.pdata = wx.TextCtrl(self.panel, -1, size=(200,20), value=val); f(self.pdata); #colorBackground(self.pdata)
+        self.plab = wx.StaticText(self.panel, -1, title, size=(100+len(title),-1)); f(self.plab)
+        self.pdata = wx.TextCtrl(self.panel, -1, size=(200,20), value=val); f(self.pdata); 
         self.pbox.Add(self.plab, border=5,flag=wx.ALL)
         self.pbox.Add(self.pdata, border=5,flag=wx.EXPAND)
         pnl.Add(self.pbox, 1, flag=wx.LEFT | wx.TOP | wx.GROW)
@@ -281,16 +258,16 @@ class GraphFrame(wx.Frame):
 
     def init_plot(self):
         self.dpi = 100
-        self.fig = Figure((4.0, 4.0), dpi=self.dpi)
+        self.fig = Figure((4.0, 4.0), dpi=self.dpi, facecolor=back_color)
 
         self.axes = self.fig.add_subplot(111)
-        self.axes.set_axis_bgcolor('black')
-        self.axes.set_title('Tonographer Output', size=14)
-        self.axes.set_xlabel('Time',size=12)
-        self.axes.set_ylabel('Voltage (volts)',size=12)
+        self.axes.set_axis_bgcolor(graph_bg)
+        self.axes.set_title('Tonographer Output', size=14, color=text_color)
+        self.axes.set_xlabel('Time (s)',size=12,color=text_color)
+        self.axes.set_ylabel('Voltage (volts)',size=12, color=graph_ax)
 
-        pylab.setp(self.axes.get_xticklabels(), fontsize=8)
-        pylab.setp(self.axes.get_yticklabels(), fontsize=8)
+        pylab.setp(self.axes.get_xticklabels(), fontsize=10, color=text_color)
+        pylab.setp(self.axes.get_yticklabels(), fontsize=10, color=graph_ax)
 
         # plot the data as a line series, and save the reference 
         # to the plotted line series
@@ -304,36 +281,13 @@ class GraphFrame(wx.Frame):
     def draw_plot(self):
         """ Redraws the plot
         """
-        # when xmin is on auto, it "follows" xmax to produce a 
+        # xmin "follows" xmax to produce a 
         # sliding window effect. therefore, xmin is assigned after
         # xmax.
-        #
-        if self.xmax_control.is_auto():
-            xmax = len(self.data) if len(self.data) > 120 else 120
-        else:
-            xmax = int(self.xmax_control.manual_value())
-            
-        if self.xmin_control.is_auto():            
-            xmin = xmax - 120
-        else:
-            xmin = int(self.xmin_control.manual_value())
-
-        # for ymin and ymax, find the minimal and maximal values
-        # in the data set and add a mininal margin.
-        # 
-        # note that it's easy to change this scheme to the 
-        # minimal/maximal value in the current display, and not
-        # the whole data set.
-        # 
-        if self.ymin_control.is_auto():
-            ymin = round(min(self.data), 0) - 1
-        else:
-            ymin = int(self.ymin_control.manual_value())
-        
-        if self.ymax_control.is_auto():
-            ymax = round(max(self.data), 0) + 1
-        else:
-            ymax = int(self.ymax_control.manual_value())
+        xmax = len(self.data) if len(self.data) > 120 else 120          
+        xmin = xmax - 120
+        ymin = 0
+        ymax = 5        
 
         self.axes.set_xbound(lower=xmin, upper=xmax)
         self.axes.set_ybound(lower=ymin, upper=ymax)
@@ -343,27 +297,25 @@ class GraphFrame(wx.Frame):
         # so just passing the flag into the first statement won't
         # work.
         #
-        if self.cb_grid.IsChecked():
-            self.axes.grid(True, color='gray')
-        else:
-            self.axes.grid(False)
 
-        # Using setp here is convenient, because get_xticklabels
-        # returns a list over which one needs to explicitly 
-        # iterate, and setp already handles this.
-        #  
-        pylab.setp(self.axes.get_xticklabels(), 
-            visible=self.cb_xlab.IsChecked())
-        
+        self.axes.grid(True, color=graph_gr)       
         self.plot_data.set_xdata(np.arange(len(self.data)))
         self.plot_data.set_ydata(np.array(self.data))
         
         self.canvas.draw()
+        
     def on_start_button(self, event):
+ #       if restart:
+            #double check about saving first
+            #clear form
+            #start again
+ #           self.on_exit(event)
         self.running = not self.running
     
     def on_update_start_button(self, event):
+ #       global restart
         label = "Stop" if self.running else "Start"
+ #       if label is "Restart": restart = True
         self.start_button.SetLabel(label)
         
     def on_pause_button(self, event):
@@ -396,10 +348,12 @@ class GraphFrame(wx.Frame):
             self.flash_status_message("Saved to %s" % path)
     
     def on_redraw_timer(self, event):
-        """redraws plot; if paused or no new data in PLOT_ARRAY,
+        """redraws plot; if paused/not running or no new data in PLOT_ARRAY,
         do not add data to the plot, but still redraw the plot
         (to respond to scale modifications, grid change, etc.)"""
-        if (not self.paused) and (len(RAW_Q)%frequency == 0):
+        if ((not (self.paused or not self.running))
+            and (len(RAW_Q)%frequency == 0)):
+            readPort()
             nxt = len(self.data) #this is set for the case that
                                  #PLOT_ARRAY is updating faster than the graph
                                  #is being drawn
@@ -410,6 +364,7 @@ class GraphFrame(wx.Frame):
         global exit_flag
         exit_flag = True
         self.Destroy()
+        
     
     def flash_status_message(self, msg, flash_len_ms=1500):
         self.statusbar.SetStatusText(msg)
