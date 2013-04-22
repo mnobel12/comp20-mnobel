@@ -1,15 +1,14 @@
 var ctx; var canvas;
 var lives; var level; var score;
-highscore = 0; 		//will have to account for this
-image_tracker = []; //content in the form of [[image, xy coords]*number of images in track, speed] 
 var W; var H;
 var animationIntervalId;
-var dead_flag = 0;
 
 var medlog, biglog, shortlog;
 var truck, racer, pinkcar, yellowcar, tractor;
 var frog;
 
+dead_flag = 0; highscore = 0;
+image_tracker = []; //content in the form of [[image, xy coords]*number of images in track, speed] 
 sprites = new Image(); sprites.src = 'assets/frogger_sprites.png';
 dead	= new Image(); dead.src = 'assets/dead_frog.png';
 
@@ -184,19 +183,19 @@ function level_init(){
 	image_tracker[10] = {'image':frog, 'x': [W/2-50], 'y': 485, 'speed':0};
 	animationIntervalId = setInterval(animate, 30);
 	
-	if(level == 2){
+	if(level >= 2){
 		(image_tracker[1]['x']).splice(3,3);
 		image_tracker[4]['x'].splice(6-level,6-level);
 		image_tracker[6].speed = image_tracker[6].speed*2;
 		image_tracker[8]['x'].push(-(13*tractor.swidth));
 	}
-	else if(level == 3){
+	if(level >= 3){
 		image_tracker[0].speed = image_tracker[0].speed/2;
 		image_tracker[2]['x'].splice(2,2);
 		image_tracker[4]['x'].splice(6-level,6-level);
 		image_tracker[9].speed = image_tracker[9].speed*1.5; 
 	}
-	else if(level == 4){
+	if(level >= 4){
 		image_tracker[3].speed = 0.75*image_tracker[0].speed;
 		image_tracker[4]['x'].splice(6-level,6-level);
 		image_tracker[5].speed -= 1;
